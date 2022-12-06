@@ -13,7 +13,7 @@ struct memory_manager_t memoryManager;
 int heap_setup(void)
 {
     memoryManager.memory_start = custom_sbrk(PAGE_SIZE);
-    if(*(int *)memoryManager.memory_start == -1)
+    if(memoryManager.memory_start == (void *)-1)
     {
         return -1;
     }
@@ -28,6 +28,7 @@ void heap_clean(void)
 {
     memset(memoryManager.memory_start, 0, memoryManager.memory_size);
     custom_sbrk(-(intptr_t )memoryManager.memory_size);
+
     memoryManager.memory_size = 0;
     memoryManager.memory_start = NULL;
     memoryManager.first_memory_chunk = NULL;
@@ -65,6 +66,7 @@ void* heap_malloc(size_t size)
         memoryManager.first_memory_chunk = chunk;
 
         set_checksum();
+
         return (void *)((char *)chunk + sizeof(struct memory_chunk_t) + FENCE_LENGTH);
     }
     else
@@ -76,7 +78,9 @@ void* heap_malloc(size_t size)
             {
                 ptr->size = size;
                 ptr->free = 0;
+
                 memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
                 set_checksum();
 
                 return (void *)((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH);
@@ -96,9 +100,12 @@ void* heap_malloc(size_t size)
                     ptr->next->prev = new;
                     ptr->next = new;
                     new->free = 0;
+
                     memset((char *)new + sizeof(struct memory_chunk_t), '#', FENCE_LENGTH);
                     memset((char *)new + sizeof(struct memory_chunk_t) + FENCE_LENGTH + new->size, '#', FENCE_LENGTH);
+
                     set_checksum();
+
                     return (void *)((char *)new + sizeof(struct memory_chunk_t) + FENCE_LENGTH);
                 }
             }
@@ -127,9 +134,9 @@ void* heap_malloc(size_t size)
                 memset((char *)ptr->next + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->next->size, '#', FENCE_LENGTH);
 
                 set_checksum();
+
                 return (void *)((char *)ptr->next + sizeof(struct memory_chunk_t) + FENCE_LENGTH);
             }
-
             ptr = ptr->next;
         }
     }
@@ -184,7 +191,9 @@ void* heap_realloc(void* memblock, size_t count)
             if(count < ptr->size)
             {
                 ptr->size = count;
+
                 memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
                 set_checksum();
 
                 return memblock;
@@ -206,7 +215,9 @@ void* heap_realloc(void* memblock, size_t count)
                 }
 
                 ptr->size = count;
+
                 memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
                 set_checksum();
 
                 return memblock;
@@ -216,7 +227,9 @@ void* heap_realloc(void* memblock, size_t count)
             {
                 ptr->size = count;
                 ptr->free = 0;
+
                 memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
                 set_checksum();
 
                 return memblock;
@@ -231,6 +244,7 @@ void* heap_realloc(void* memblock, size_t count)
                 ptr->free = 0;
 
                 memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
                 set_checksum();
 
                 return memblock;
@@ -246,16 +260,18 @@ void* heap_realloc(void* memblock, size_t count)
         {
             ptr->free = 0;
             ptr->size = count;
+
             struct memory_chunk_t* old_chunk = (struct memory_chunk_t *) ((char *) memblock -
                                                                           sizeof(struct memory_chunk_t) -
                                                                           FENCE_LENGTH);
             memcpy((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH, memblock, old_chunk->size);
             memset((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH + ptr->size, '#', FENCE_LENGTH);
+
             set_checksum();
             heap_free(memblock);
+
             return (void *)((char *)ptr + sizeof(struct memory_chunk_t) + FENCE_LENGTH);
         }
-
         ptr = ptr->next;
     }
 
@@ -264,12 +280,15 @@ void* heap_realloc(void* memblock, size_t count)
     {
         return NULL;
     }
+
     struct memory_chunk_t* old_chunk = (struct memory_chunk_t *) ((char *) memblock -
                                                                   sizeof(struct memory_chunk_t) -
                                                                   FENCE_LENGTH);
     memcpy((char *)new_ptr, memblock, old_chunk->size);
+
     set_checksum();
     heap_free(memblock);
+
     return new_ptr;
 }
 
@@ -278,6 +297,7 @@ void heap_free(void* memblock)
     if(get_pointer_type(memblock) == pointer_valid)
     {
         size_t taken_chunks = 0;
+
         struct memory_chunk_t *ptr = memoryManager.first_memory_chunk;
         while(ptr)
         {
@@ -341,7 +361,6 @@ void heap_free(void* memblock)
                     taken_chunks += 1;
                 }
             }
-
             ptr = ptr->next;
         }
 
@@ -361,9 +380,9 @@ size_t heap_get_largest_used_block_size(void)
         return 0;
     }
 
-    struct memory_chunk_t *ptr = memoryManager.first_memory_chunk;
     size_t max = 0;
 
+    struct memory_chunk_t *ptr = memoryManager.first_memory_chunk;
     while(ptr)
     {
         if(!ptr->free)
@@ -460,8 +479,6 @@ int heap_validate(void)
         }
         if(!ptr->free)
         {
-
-
             if(!ptr->size || ptr->size > memoryManager.memory_size)
             {
                 return 3;
@@ -523,20 +540,7 @@ void set_checksum(void)
     while (chunk)
     {
         chunk->checksum = checksum(chunk);
+
         chunk = chunk->next;
     }
-}
-
-unsigned int allocated_chunks_amount(void)
-{
-    struct memory_chunk_t *ptr = memoryManager.first_memory_chunk;
-    unsigned int amount = 0;
-    while(ptr)
-    {
-        if(!ptr->free)
-            ++amount;
-        ptr = ptr->next;
-    }
-
-    return amount;
 }

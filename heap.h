@@ -45,5 +45,4 @@ int heap_validate(void);
 unsigned int checksum(struct memory_chunk_t *chunk);
 void set_checksum(void);
 
-
 #endif
