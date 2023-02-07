@@ -10,7 +10,7 @@ Memory allocator written in C langugae. It allows to allocate, reallocate and fr
 int main() {
     heap_setup();
 
-    void *ptr = heap_malloc(10); //or void *ptr = heap_calloc(1, 10) or void *ptr = heap_realloc(NULL, 10);
+    void *ptr = heap_malloc(10);
     if(ptr == NULL)
     {
         return -1;
