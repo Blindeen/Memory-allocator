@@ -1,6 +1,6 @@
 # Memory allocator in C
 ## Description
-Memory allocator written in C langugae. It allows to allocate, reallocate and free memory.
+Memory allocator written in C language. It allows to allocate, reallocate and free memory.
 ## Author
 [@Blindeen](https://www.github.com/Blindeen)
 ## Usage
