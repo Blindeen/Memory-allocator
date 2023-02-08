@@ -3,6 +3,10 @@
 Memory allocator written in C language. It allows to allocate, reallocate and free memory.
 ## Author
 [@Blindeen](https://www.github.com/Blindeen)
+## Features
+* Allocation
+* Reallocation
+* Freeing
 ## Usage
 ```c
 #include "heap.h"
